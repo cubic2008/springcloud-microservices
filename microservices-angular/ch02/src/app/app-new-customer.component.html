@@ -1,0 +1,21 @@
+<div>
+    <h2>New Customer Creation - {{customer.name}}</h2>
+    <div>
+        <label>Customer#: </label>
+        <input [(ngModel)]="customer.customerNo" placeholder="customer no ...">
+    </div>
+    <div>
+        <label>Name: </label>
+        <input [(ngModel)]="customer.name" placeholder="customer's full name ...">
+    </div>
+    <div>
+        <label>Email: </label>
+        <input [(ngModel)]="customer.email" placeholder="customer's email ...">
+    </div>
+    <div>
+        <label>Address: </label>
+        <input [(ngModel)]="customer.address" placeholder="customer address ...">
+    </div>
+    <button (click)="create()">Create</button>
+</div>
+    

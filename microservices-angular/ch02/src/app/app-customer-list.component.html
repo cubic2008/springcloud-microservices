@@ -1,0 +1,10 @@
+<!--The content below is only a placeholder and can be replaced.-->
+<div class="heading">Click on the customer name for the detail information</div>
+<ul class="app-list">
+  <li *ngFor="let customer of customerList" class="list-item">
+      <span class="badge">{{customer.customerNo}}</span>
+      <a [routerLink]="['/customer', customer.id]" class="col-1-4">{{customer.name}}</a>
+      <button (click)="gotoDetail(customer)" class="delete">View Details</button>
+  </li>
+</ul>
+<button (click)="createCustomer()">Create a new customer</button>

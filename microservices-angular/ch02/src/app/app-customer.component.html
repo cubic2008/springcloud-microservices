@@ -1,0 +1,41 @@
+<div *ngIf="!editMode">
+    <div *ngIf="customer">
+        <h2>{{customer.name}} details</h2>
+        <div><label>id: </label>{{customer.id}}</div>
+        <div><label>Customer#: </label>{{customer.customerNo}}</div>
+        <div><label>Name: </label>{{customer.name}}</div>
+        <div><label>Email: </label>{{customer.email}}</div>
+        <div><label>Address: </label>{{customer.address}}</div>
+        <button (click)="goBack()">Back</button>
+        <button (click)="edit()">Edit</button>
+        <p>
+        <h3>Account List</h3>
+        <ul class="app-list">
+            <li *ngFor="let account of customer.accountList" class="list-item">
+                <a [routerLink]="['/account', account.id]" class="col-1-4">{{account.accountNo}}</a>
+                <span class="col-1-4">{{displayableAccountType ( account.type ) }}</span>
+                <span class="col-9-20">{{account.balance}}</span>
+            </li>
+        </ul>
+    </div>
+</div>
+<div *ngIf="editMode">
+        <div>
+            <label>Customer#: </label>
+            <input [(ngModel)]="modifiedCustomer.customerNo" placeholder="customer no ...">
+        </div>
+        <div>
+            <label>Name: </label>
+            <input [(ngModel)]="modifiedCustomer.name" placeholder="customer's full name ...">
+        </div>
+        <div>
+            <label>Email: </label>
+            <input [(ngModel)]="modifiedCustomer.email" placeholder="customer's email ...">
+        </div>
+        <div>
+            <label>Address: </label>
+            <input [(ngModel)]="modifiedCustomer.address" placeholder="customer address ...">
+        </div>
+        <button (click)="cancel()">Cancel</button>
+        <button (click)="save()">Save</button>
+</div>
