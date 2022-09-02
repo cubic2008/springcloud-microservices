@@ -1,4 +1,4 @@
-package com.cubic.microservices.customer_service;
+package com.cubic.microservices.account_service;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

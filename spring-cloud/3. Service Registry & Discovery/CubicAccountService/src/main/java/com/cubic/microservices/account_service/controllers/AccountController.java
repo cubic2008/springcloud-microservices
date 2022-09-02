@@ -28,11 +28,13 @@ public class AccountController {
 	
 	@GetMapping("")
 	public List<Account> getAllAccounts ( ) {
+		System.out.println("AccountController.getAllAccounts() is invoked.");
 		return this.accountService.getAllAcounts();
 	}
 
 	@GetMapping("/customer/{customerId}")
 	public List<Account> getAllAccounts ( @PathVariable int customerId ) {
+		System.out.println(String.format("AccountController.getAllAccounts(%d) is invoked.", customerId));
 		return this.accountService.getAllAcounts(customerId);
 	}
 

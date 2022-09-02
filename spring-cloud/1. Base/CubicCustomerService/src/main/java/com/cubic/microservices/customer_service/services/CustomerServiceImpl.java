@@ -6,10 +6,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.cubic.microservices.customer_service.dao.CustomerRepository;
+import com.cubic.microservices.customer_service.domain.AppInfo;
 import com.cubic.microservices.customer_service.domain.Customer;
 
 @Service
 public class CustomerServiceImpl implements CustomerService {
+	
+	@Autowired
+	private AppInfo appInfo;
+
+	@Override
+	public AppInfo getAppName() {
+		return this.appInfo;
+	}
 	
 	@Autowired
 	private CustomerRepository customerRepository;

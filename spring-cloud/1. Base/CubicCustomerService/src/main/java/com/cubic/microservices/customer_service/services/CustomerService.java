@@ -2,6 +2,7 @@ package com.cubic.microservices.customer_service.services;
 
 import java.util.List;
 
+import com.cubic.microservices.customer_service.domain.AppInfo;
 import com.cubic.microservices.customer_service.domain.Customer;
 
 public interface CustomerService {
@@ -13,5 +14,7 @@ public interface CustomerService {
 	public Customer saveCustomer(Customer customer);
 
 	public Customer updateCustomer(int id, Customer customer);
+
+	public AppInfo getAppName();
 
 }
