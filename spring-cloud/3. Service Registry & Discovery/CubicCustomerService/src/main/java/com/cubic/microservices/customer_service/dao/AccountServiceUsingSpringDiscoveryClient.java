@@ -20,6 +20,8 @@ public class AccountServiceUsingSpringDiscoveryClient {
 
 	@Autowired
 	private DiscoveryClient discoveryClient;
+	
+	private static int serviceIndex = 0;
 
 	public List<Account> getAccountsForCustomer(int customerId) {
 		System.out.println( "Option #1: AccountServiceDiscoveryClient.getAccounts()");
@@ -38,8 +40,15 @@ public class AccountServiceUsingSpringDiscoveryClient {
 			System.out.println( "instances.size() == 0" );
 			return null;
 		}
-		String serviceUri = String.format("%s/v1/accounts/customer/%d", instances.get(0).getUri().toString(),
+		
+		// Using programmatically backwards round-robin strategy
+		serviceIndex --;
+		if (serviceIndex < 0 || serviceIndex >= instances.size()) {
+			serviceIndex = instances.size() - 1;
+		}
+		String serviceUri = String.format("%s/v1/accounts/customer/%d", instances.get(serviceIndex).getUri().toString(),
 				customerId);
+		System.out.println("Invoking accountService: " + serviceUri);
 		@SuppressWarnings("unchecked")
 		ResponseEntity<List<Account>> restExchange = 
 			restTemplate.exchange(serviceUri, HttpMethod.GET, null, 

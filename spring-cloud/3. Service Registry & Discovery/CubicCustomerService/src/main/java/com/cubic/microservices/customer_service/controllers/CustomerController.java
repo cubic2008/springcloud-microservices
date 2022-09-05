@@ -2,6 +2,8 @@ package com.cubic.microservices.customer_service.controllers;
 
 import java.util.List;
 
+import javax.websocket.server.PathParam;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.cubic.microservices.customer_service.domain.AppInfo;
 import com.cubic.microservices.customer_service.domain.Customer;
 import com.cubic.microservices.customer_service.services.CustomerService;
+import com.cubic.microservices.customer_service.services.DiscoveryClient;
 
 @CrossOrigin("*")
 @RestController
@@ -35,6 +38,28 @@ public class CustomerController {
 	@GetMapping("")
 	public List<Customer> getAllCustomers ( ) {
 		return this.customerService.getAllCustomers();
+	}
+
+	@GetMapping("/client/{discoveryClient}")
+	public List<Customer> getAllCustomers ( @PathVariable("discoveryClient") String discoveryClientName) {
+		System.out.println("discoveryClientName = " + discoveryClientName);
+		
+		DiscoveryClient discoveryClient;
+		switch (discoveryClientName) {
+			case DiscoveryClient.SPRING_DISCOVERY_CLIENT:
+				discoveryClient = DiscoveryClient.SpringDiscoveryClient;
+				break;
+			case DiscoveryClient.RIBBON_AWARED_SPRING_REST_TEMPLATE:
+				discoveryClient = DiscoveryClient.RibbonAwaredSpringRestTemplate;
+				break;
+			case DiscoveryClient.FEIGN_CLIENT:
+				discoveryClient = DiscoveryClient.FeignClient;
+				break;
+			default:
+				discoveryClient = DiscoveryClient.FeignClient;
+				break;
+		}
+		return this.customerService.getAllCustomers(discoveryClient);
 	}
 
 	@GetMapping("{id}")

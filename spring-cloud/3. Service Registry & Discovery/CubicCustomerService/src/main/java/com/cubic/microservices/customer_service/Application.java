@@ -11,7 +11,7 @@ import org.springframework.web.client.RestTemplate;
 @SpringBootApplication
 //@RefreshScope
 @EnableDiscoveryClient	// Option #1: Looking up service instances with Spring DiscoveryClient
-@EnableFeignClients			// Option #3: Invoking services with Netflix Feign client
+@EnableFeignClients		// Option #3: Invoking services with Netflix Feign client
 public class Application {
 
 	public static void main(String[] args) {

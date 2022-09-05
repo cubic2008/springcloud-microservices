@@ -123,12 +123,40 @@ console of Eureka server.
 ![img_1.png](doc-images/pic3-2.png)
 
 Then you can issue a REST API invocation to the Customer Service, or from the frontend
-app, and observe logs of the two Account Services. The Customer Service uses the service
-name of Account Service via Ribbon to access them using round-robin strategy. If you bring
-down one of the Account Service, the Customer Service will not be impacted. You can observe
-all REST API invocations occurring in the only running Account Service.
+app, using http://localhost:2001/v1/customers service endpoint, and observe logs of the 
+two Account Services. The Customer Service uses the service name of Account Service via 
+Ribbon to access them using round-robin strategy. If you bring down one of the Account 
+Service, the Customer Service will not be impacted. You can observe all REST API 
+invocations occurring in the only running Account Service.
 
 ![img_2.png](doc-images/pic3-3.png)
+
+The REST API http://localhost:2001/v1/customers is using the FeignClient to access the 
+Account Service. You can revise the `CustomerServiceImpl.java` class in the Customer
+Service to use different service discovery clients.
+
+```java
+//	Option #1: Looking up service instances with Spring DiscoveryClient
+//	@Autowired
+//	private AccountServiceUsingSpringDiscoveryClient accountServiceDiscoveryClient;
+	
+//	Option #2: Invoking services with Ribbon-aware Spring RestTemplate
+//	@Autowired
+//	private AccountServiceClientUsingRibbonAwaredSpringRestTemplate accountServiceDiscoveryClient;
+	
+//	Option #3: Invoking services with Netflix Feign client
+	@Autowired
+	private AccountServiceUsingFeignClient accountServiceDiscoveryClient;
+```
+
+In fact, in the `CustomerServiceImpl.java` class, it also defined all three clients and
+exposes a REST API to let the invoker specify one of three service discovery clients to 
+invoke the Account Service. More specifically, the SpringDiscoveryClient strategy uses
+a program controlled backwards round-robin pattern.
+
+- http://localhost:2001/v1/customers/client/SpringDiscoveryClient
+- http://localhost:2001/v1/customers/client/RibbonAwaredSpringRestTemplate
+- http://localhost:2001/v1/customers/client/FeignClient
 
 
 

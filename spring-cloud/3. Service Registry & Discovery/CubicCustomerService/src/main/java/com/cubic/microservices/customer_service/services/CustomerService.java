@@ -17,4 +17,6 @@ public interface CustomerService {
 
 	public Customer updateCustomer(int id, Customer customer);
 
+	public List<Customer> getAllCustomers(DiscoveryClient discoveryClient);
+
 }
