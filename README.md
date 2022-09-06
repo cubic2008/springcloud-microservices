@@ -32,6 +32,18 @@ It connects to `MySQL` database on the `localhost` at the port `3306`.
 If you want to change this information, you need to make corresponding changes in these
 configuration files.
 
+All packages are using the username `cubicuser` and password `passw0rd` to access the 
+database. The following commands will create the database user and grant privileges to 
+the user in MySQL.
+
+```sql
+CREATE USER 'cubicuser'@'localhost' IDENTIFIED BY 'passw0rd';
+GRANT ALL PRIVILEGES ON springcloud_db.* TO 'cubicuser'@'localhost' WITH GRANT OPTION;
+```
+
+You will also need to create database schema for each package using the `db.sql` script under 
+the `src/main/resources` folder of each individual project of the package.
+
 ## Package #1: Run Angular Frontend App + SpringBoot Backend (Customer Service)
 
 This package is a pure Angular Frontend App + SpringBoot Backend. It does not engage any
@@ -84,7 +96,7 @@ Additionally, you can use PostMan to access the Config Server and the Customer S
 
 ![img_3.png](doc-images/pic2-4.png)
 
-## Package #3: Config Server + Eureka Server
+## Package #3: Service Registry & Discovery (Config Server + Eureka Server)
 
 This package is extended based on Package #2 and mainly demonstrates the Service Registration
 and Discovery (using Eureka and Ribbon). It contains four services: 
@@ -97,7 +109,7 @@ and Discovery (using Eureka and Ribbon). It contains four services:
 To build and run, execute the following command:
 
 ```windows
-C:spring-cloud> cd "2. Config Server"
+C:spring-cloud> cd "3. Service Registry & Discovery"
 C:spring-cloud> build_and_run.bat
 ```
 
@@ -158,5 +170,123 @@ a program controlled backwards round-robin pattern.
 - http://localhost:2001/v1/customers/client/RibbonAwaredSpringRestTemplate
 - http://localhost:2001/v1/customers/client/FeignClient
 
+## Package #4: Service Resiliency Pattern (Config Server + Eureka Server + Hystrix)
 
+This package is extended based on Package #3 and mainly demonstrates the following Resiliency 
+Patterns using Netflix’s Hystrix library.
+
+- Client-side load balancing (not included, it is already demonstrated in package #3)
+- Circuit breakers
+- Fallbacks
+- Bulkheads
+
+It contains four services:
+-
+- Config Server
+- Eureka Server
+- Customer Service
+- Account Service
+
+There are two Customer Services to demonstrate two perspectives:
+
+- CubicCustomerService: demonstrates above three resiliency patterns using Netflix's Hystrix library
+- CubicCustomerService-2: demonstrates a custom strategy, ThreadLocalAwareStrategy.
+
+### Build & Run for Netflix Hystrix features without the custom strategy
+
+To build and run for Netflix Hystrix features without the custom strategy, execute the 
+following command:
+
+```windows
+C:spring-cloud> cd "4. Service Resiliency Patterns"
+C:spring-cloud> build_and_run_nostrategy.bat
+```
+
+It will start four servers/services:
+
+- one Config Server: listens at port `2101`
+- one Eureka Server: listens at port `2201`
+- one Account Service: listens at port `2011`
+- one Customer Service: listens at port `2001`
+
+You can use the same frontend Angular app of Package #1 to access the Customer Service.
+
+Additionally, you can use PostMan to access these servers. When you issue the following REST
+API call in PostMan,
+
+```url
+    http://localhost:2001/v1/customers/
+```
+
+Two out of three times, the response will contain a list of customer profiles, some customers
+will have a list of accounts.
+
+![img.png](doc-images/pic4-1.png)
+
+One of three times, the Customer Service will simulate a 11-second delay. The fallback method
+is triggered by the Hystrix as we have configured a 3-second timeout. The response will be
+returned in 3 seconds, with a blank customer profile list.
+
+![img.png](doc-images/pic4-2.png)
+
+From the log of the Customer Service, you can observe that the fallback method, retrieveNoCustomerProfiles,
+is called.
+
+![img.png](doc-images/pic4-3.png)
+
+Moreover, if you shutdown the Account Service, then the response (in two out of three times)
+will contain a list of customer profile, but the account list in each customer profile is
+an empty list.
+
+![img.png](doc-images/pic4-4.png)
+
+From the log of the Customer Service, you can observe that the fallback method, retrieveAccounts(Customer),
+is called. 
+
+![img_1.png](doc-images/pic4-5.png)
+
+- CubicCustomerService-2: demonstrates a custom strategy, ThreadLocalAwareStrategy.
+
+### Build & Run for Netflix Hystrix features with the custom strategy
+
+To build and run for Netflix Hystrix features with a custom strategy, ThreadLocalAwareStrategy, 
+execute the following command:
+
+```windows
+C:spring-cloud> cd "4. Service Resiliency Patterns"
+C:spring-cloud> build_and_run_with_strategy.bat
+```
+
+It will start four servers/services:
+
+- one Config Server: listens at port `2101`
+- one Eureka Server: listens at port `2201`
+- one Account Service: listens at port `2011`
+- one Customer Service - 2: listens at port `2001`
+
+By default, the custom strategy, ThreadLocalAwareStrategy, is enabled.
+
+When you issue the REST API invocation `http://localhost:2001/v1/customers/` on PostMan with
+a header entry `tmx-correlation-id=1234567890`, you can see in the log of the CustomerService
+that both the main thread and the Hystrix thread have the same context information that was
+extracted from the header.
+
+![img.png](doc-images/pic4-6.png)
+
+![img_1.png](doc-images/pic4-7.png)
+
+To further demonstrate this feature, you can restart the CustomerService-2 with
+`--cubic.app.useThreadLocalAwareStrategy=false` option to disable the customer strategy.
+
+```windows
+C:spring-cloud> cd "4. Service Resiliency Patterns\CubicCustomerService-2"
+C:spring-cloud> start java -jar target\customer-service-0.0.1-SNAPSHOT.jar --cubic.app.useThreadLocalAwareStrategy=false
+```
+
+Now when you re-issue the the REST API invocation `http://localhost:2001/v1/customers/` on PostMan with
+a header entry `tmx-correlation-id=1234567890`, you can see in the log of the CustomerService
+that only the main thread has the same context information that was extracted from the header,
+but the Hystrix trhead does not have the same context.
+
+![img_2.png](doc-images/pic4-8.png)
 

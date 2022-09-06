@@ -18,16 +18,16 @@ cd ..\CubicEurekaServer
 call mvn clean package
 start java -jar target\eureka_server-0.0.1-SNAPSHOT.jar
 
-@REM Build and Run 2 Account Services (at port 2011 and 2012)
+@REM Build and Run Account Services (at port 2011)
 @echo.
-@echo --------------------------------------------------------
-@echo Build and Run 2 Account Services (at port 2011 and 2012)
-@echo --------------------------------------------------------
+@echo --------------------------------------------
+@echo Build and Run Account Service (at port 2011)
+@echo --------------------------------------------
 @pause
 cd ..\CubicAccountService
 call mvn clean package
 start java -jar target\account-service-0.0.1-SNAPSHOT.jar --server.port=2011
-start java -jar target\account-service-0.0.1-SNAPSHOT.jar --server.port=2012
+# start java -jar target\account-service-0.0.1-SNAPSHOT.jar --server.port=2012
 
 @REM Build and Run Customer Service (at default port 2001)
 @echo.
