@@ -290,3 +290,22 @@ but the Hystrix trhead does not have the same context.
 
 ![img_2.png](doc-images/pic4-8.png)
 
+### Access Hystrix Dashboard
+
+Both CustomerService and CustomerService-2 have included and enabled the Hystrix Dashboard
+feature.
+
+To access it, enter the following URL in a browser:
+
+```url
+    http://localhost:2001/hystrix
+```
+
+In the “Turbine Stream” box, enter the URL: `http://localhost:2001/actuator/hystrix.stream`
+
+![img.png](doc-images/pic4-9.png)
+
+Then click the “**Monitor Stream**” button. After a few service invocation to the Customer Service,
+you should be able to see the information is displayed in the dashboard.
+
+![img_1.png](doc-images/pic4-10.png)
