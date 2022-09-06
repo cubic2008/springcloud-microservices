@@ -100,7 +100,7 @@ Additionally, you can use PostMan to access the Config Server and the Customer S
 
 This package is extended based on Package #2 and mainly demonstrates the Service Registration
 and Discovery (using Eureka and Ribbon). It contains four services: 
-- 
+ 
 - Config Server
 - Eureka Server
 - Customer Service
