@@ -181,7 +181,7 @@ Patterns using Netflix’s Hystrix library.
 - Bulkheads
 
 It contains four services:
--
+
 - Config Server
 - Eureka Server
 - Customer Service
