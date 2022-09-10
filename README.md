@@ -41,8 +41,10 @@ CREATE USER 'cubicuser'@'localhost' IDENTIFIED BY 'passw0rd';
 GRANT ALL PRIVILEGES ON springcloud_db.* TO 'cubicuser'@'localhost' WITH GRANT OPTION;
 ```
 
-You will also need to create database schema for each package using the `db.sql` script under 
-the `src/main/resources` folder of each individual project of the package.
+You will also need to create database schema for each package using the `schema.sql` script 
+under the `db-schema/<pkg#>` folder, where `<pkg#>` is the package number. For example, you
+need to run the `db-schema/01/schema.sql` script to implement the required database schema
+in order to run the package #1.
 
 ## Package #1: Run Angular Frontend App + SpringBoot Backend (Customer Service)
 
@@ -283,6 +285,13 @@ C:spring-cloud> cd "4. Service Resiliency Patterns\CubicCustomerService-2"
 C:spring-cloud> start java -jar target\customer-service-0.0.1-SNAPSHOT.jar --cubic.app.useThreadLocalAwareStrategy=false
 ```
 
+or 
+
+```windows
+C:spring-cloud> cd "4. Service Resiliency Patterns\CubicCustomerService-2"
+C:spring-cloud> start mvn spring-boot:run
+```
+
 Now when you re-issue the the REST API invocation `http://localhost:2001/v1/customers/` on PostMan with
 a header entry `tmx-correlation-id=1234567890`, you can see in the log of the CustomerService
 that only the main thread has the same context information that was extracted from the header,
@@ -309,3 +318,136 @@ Then click the “**Monitor Stream**” button. After a few service invocation t
 you should be able to see the information is displayed in the dashboard.
 
 ![img_1.png](doc-images/pic4-10.png)
+
+## Package #5: Service Gateway: Service routing with Spring Cloud and Zuul
+
+This package is extended based on Package #4 and mainly demonstrates the implementation of
+a typical Service Gateway usage of service routing using Spring Cloud and Netflix's Zuul
+library.
+
+In this package, it contains the following services/servers:
+
+- Config Server
+- Eureka Server
+- Zuul Server
+- Special Route Service
+- Customer Service
+- Account Service
+- New Account Service
+
+To build and run all services inside this package, execute the following command:
+
+```windows
+C:spring-cloud> cd "5. Service routing with Spring Cloud and Zuul"
+C:spring-cloud> build_and_run.bat
+```
+
+It will start the following servers/services:
+
+- one Config Server: listens at port `2101`
+- one Eureka Server: listens at port `2201`
+- Zuul Server: listens at port `2301`
+- Special Route Service: listens at port `2031`
+- one Account Service: listens at port `2011`
+- one New Account Service: listens at port `2021`
+- one Customer Service: listens at port `2001`
+
+After all services/servers are up running, you can see the routes being managed by the Zuul 
+server by accessing the service endpoint at: `http://localhost:2301/actuator/routes`
+
+![img.png](doc-images/pic5-1.png)
+
+You can access the Customer Service through the Zuul server using the following URL that is
+exposed by the Zuul server:
+
+```url
+    http://localhost:2301/api/cust-service/v1/customers/
+```
+
+![img_1.png](doc-images/pic5-2.png)
+
+You can access the Account Service through the Zuul server using the following URL that is
+exposed by the Zuul server:
+
+```url
+    http://localhost:2301/api/acct-service/v1/accounts/customer/1
+```
+
+![img_2.png](doc-images/pic5-3.png)
+
+Please note that, accessing the regular Account Service using the above URL may result in
+accessing the new Account Service, as the Zuul server will route the 50% of service invocations
+to the Account Service to the new version of the Account Service.
+
+You can also access the new Account Service through the Zuul server using the following 
+URL that is exposed by the Zuul server:
+
+```url
+    http://localhost:2301/api/new-acct-service/v1/accounts/customer/1
+```
+
+![img_3.png](doc-images/pic5-4.png)
+
+The Zuul server has implemented three filters:
+
+- Pre-filter (TrackingFilter)
+- Post-filter (ResponseFilter)
+- Route-filter (SpecialRoutesFilter)
+
+The TrackingFilter, a pre-filter, will inspect all incoming requests to the gateway and 
+determine whether there’s an HTTP header called `tmx-correlation-id` present in the request. 
+If the `tmx-correlation-id` isn’t present on the HTTP header, your Zuul TrackingFilter will 
+generate and set the correlation ID.
+
+You can observe its behaviour by issuing the service call to the Customer Service with or
+without the `tmx-correlation-id` HTTP header.
+
+For example, if you access the URL `http://localhost:2301/api/cust-service/v1/customers/` without
+the `tmx-correlation-id` HTTP header.
+
+![img_4.png](doc-images/pic5-5.png)
+
+You can observe in the log of the Zuul Server that a unique correlation ID is generated.
+
+![img_5.png](doc-images/pic5-6.png)
+
+You can also observe the correlation ID is passed to the Customer Service
+
+![img_6.png](doc-images/pic5-7.png)
+
+and the Account Service (or the New Account Service, depending on the AB testing logic)
+
+![img_7.png](doc-images/pic5-8.png)
+
+You can also find in the header of the HTTP response from the service invocation using above
+URL of the `tmx-correlation-id` field.
+
+![img_8.png](doc-images/pic5-9.png)
+
+If you access the same URL with a specified `tmx-correlation-id` field, you will find the
+header value is used and passed in all service invocations to the Customer Service and the
+Account Service (and the New Account Service, depending on the AB testing logic), as well as
+the HTTP response header.
+
+![img_9.png](doc-images/pic5-10.png)
+
+![img_10.png](doc-images/pic5-11.png)
+
+In the ResponseFilter, a post-filter, inject the correlation ID back into the HTTP response 
+headers being passed back to the caller of the service. This way, we can pass the correlation 
+ID back to the caller without ever having to touch the message body. This is why you can
+see the correlation is included in the HTTP Response header.
+
+In the SpecialRoutesFilter, a Route-filter, we implemented an AB testing, i.e., 50% traffic
+will be routed to the New Account Service. The New Account Service has the exact same logic
+as the regular Account Service except it adds a prefix of "New - " to the `accountNo` field.
+
+If you keep issuing the same call to the above URL (`http://localhost:2301/api/cust-service/v1/customers/`),
+about 50% you will get the following output. Please note the `accoutNo` field.
+
+![img_11.png](doc-images/pic5-12.png)
+
+It is also indicated in the log of the Zuul server.
+
+![img_12.png](doc-images/pic5-13.png)
+
