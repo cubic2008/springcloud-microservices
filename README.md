@@ -71,6 +71,8 @@ The default port that the backend Customer Service listens at is `2001`.
 
 ## Package #2: Config Server
 
+![img.png](doc-images/pic2-0.png)
+
 This package contains two services: Config Server and Customer Service.
 
 To build and run, execute the following command:
@@ -99,6 +101,10 @@ Additionally, you can use PostMan to access the Config Server and the Customer S
 ![img_3.png](doc-images/pic2-4.png)
 
 ## Package #3: Service Registry & Discovery (Config Server + Eureka Server)
+
+### Overview
+
+![img.png](doc-images/pic3-0.png)
 
 This package is extended based on Package #2 and mainly demonstrates the Service Registration
 and Discovery (using Eureka and Ribbon). It contains four services: 
@@ -173,6 +179,13 @@ a program controlled backwards round-robin pattern.
 - http://localhost:2001/v1/customers/client/FeignClient
 
 ## Package #4: Service Resiliency Pattern (Config Server + Eureka Server + Hystrix)
+
+### Overview
+
+![img_1.png](doc-images/pic4-0-1.png)
+
+![img.png](doc-images/pic4-0-2.png)
+
 
 This package is extended based on Package #3 and mainly demonstrates the following Resiliency 
 Patterns using Netflix’s Hystrix library.
@@ -321,6 +334,13 @@ you should be able to see the information is displayed in the dashboard.
 
 ## Package #5: Service Gateway: Service routing with Spring Cloud and Zuul
 
+### Overview
+
+![img.png](doc-images/pic5-0-1.png)
+
+![img_1.png](doc-images/pic5-0-2.png)
+
+
 This package is extended based on Package #4 and mainly demonstrates the implementation of
 a typical Service Gateway usage of service routing using Spring Cloud and Netflix's Zuul
 library.
@@ -352,10 +372,14 @@ It will start the following servers/services:
 - one New Account Service: listens at port `2021`
 - one Customer Service: listens at port `2001`
 
+You can verify that all services have been started by visit the Eureka server console at `http://localhost:2201/`.
+
+![img.png](doc-images/pic5-1.png)
+
 After all services/servers are up running, you can see the routes being managed by the Zuul 
 server by accessing the service endpoint at: `http://localhost:2301/actuator/routes`
 
-![img.png](doc-images/pic5-1.png)
+![img.png](doc-images/pic5-2.png)
 
 You can access the Customer Service through the Zuul server using the following URL that is
 exposed by the Zuul server:
@@ -364,7 +388,7 @@ exposed by the Zuul server:
     http://localhost:2301/api/cust-service/v1/customers/
 ```
 
-![img_1.png](doc-images/pic5-2.png)
+![img_1.png](doc-images/pic5-3.png)
 
 You can access the Account Service through the Zuul server using the following URL that is
 exposed by the Zuul server:
@@ -373,7 +397,7 @@ exposed by the Zuul server:
     http://localhost:2301/api/acct-service/v1/accounts/customer/1
 ```
 
-![img_2.png](doc-images/pic5-3.png)
+![img_2.png](doc-images/pic5-4.png)
 
 Please note that, accessing the regular Account Service using the above URL may result in
 accessing the new Account Service, as the Zuul server will route the 50% of service invocations
@@ -386,7 +410,7 @@ URL that is exposed by the Zuul server:
     http://localhost:2301/api/new-acct-service/v1/accounts/customer/1
 ```
 
-![img_3.png](doc-images/pic5-4.png)
+![img_3.png](doc-images/pic5-5.png)
 
 The Zuul server has implemented three filters:
 
@@ -405,33 +429,33 @@ without the `tmx-correlation-id` HTTP header.
 For example, if you access the URL `http://localhost:2301/api/cust-service/v1/customers/` without
 the `tmx-correlation-id` HTTP header.
 
-![img_4.png](doc-images/pic5-5.png)
+![img_4.png](doc-images/pic5-6.png)
 
 You can observe in the log of the Zuul Server that a unique correlation ID is generated.
 
-![img_5.png](doc-images/pic5-6.png)
+![img_5.png](doc-images/pic5-7.png)
 
 You can also observe the correlation ID is passed to the Customer Service
 
-![img_6.png](doc-images/pic5-7.png)
+![img_6.png](doc-images/pic5-8.png)
 
 and the Account Service (or the New Account Service, depending on the AB testing logic)
 
-![img_7.png](doc-images/pic5-8.png)
+![img_7.png](doc-images/pic5-9.png)
 
 You can also find in the header of the HTTP response from the service invocation using above
 URL of the `tmx-correlation-id` field.
 
-![img_8.png](doc-images/pic5-9.png)
+![img_8.png](doc-images/pic5-10.png)
 
 If you access the same URL with a specified `tmx-correlation-id` field, you will find the
 header value is used and passed in all service invocations to the Customer Service and the
 Account Service (and the New Account Service, depending on the AB testing logic), as well as
 the HTTP response header.
 
-![img_9.png](doc-images/pic5-10.png)
+![img_9.png](doc-images/pic5-11.png)
 
-![img_10.png](doc-images/pic5-11.png)
+![img_10.png](doc-images/pic5-12.png)
 
 In the ResponseFilter, a post-filter, inject the correlation ID back into the HTTP response 
 headers being passed back to the caller of the service. This way, we can pass the correlation 
@@ -445,9 +469,230 @@ as the regular Account Service except it adds a prefix of "New - " to the `accou
 If you keep issuing the same call to the above URL (`http://localhost:2301/api/cust-service/v1/customers/`),
 about 50% you will get the following output. Please note the `accoutNo` field.
 
-![img_11.png](doc-images/pic5-12.png)
+![img_11.png](doc-images/pic5-13.png)
 
 It is also indicated in the log of the Zuul server.
 
-![img_12.png](doc-images/pic5-13.png)
+![img_12.png](doc-images/pic5-14.png)
+
+## Securing Services
+
+### Overview
+
+![img.png](doc-images/pic6-0.png)
+
+This package is extended based on Package #5 and added security functionality for authentication
+and authorization using OAuth2.
+
+In this package, it contains the following services/servers:
+
+- Config Server
+- Eureka Server
+- Zuul Server: implemented supports for OAuth2 
+- Zuul Server 2: implemented supports for OAuth2 with JWT generation
+- Auth Server: implemented supports for OAuth2
+- Auth Server 2: implemented supports for OAuth2 with JWT generation
+- Customer Service: implemented supports for OAuth2
+- Customer Service 2: implemented supports for OAuth2 with JWT generation
+- Account Service: implemented supports for OAuth2
+- Account Service 2: implemented supports for OAuth2 with JWT generation
+
+Please note that, in this package, we have disabled the `SpecialRoutesFilter` in the Zuul
+server, so we will not need to include the Special Route Service and the New Account Service
+starting this package.
+
+
+### Sub-package 6-1: Implementation of OAuth2
+
+To build and run all services inside this sub-package, execute the following command:
+
+```windows
+C:spring-cloud> cd "6. Securing Microservices"
+C:spring-cloud> build_and_run_oauth2.bat
+```
+
+It will start the following servers/services:
+
+- Config Server: listens at port `2101`
+- Eureka Server: listens at port `2201`
+- Zuul Server: listens at port `2301`
+- Auth Server: listens at port `2501`
+- Account Service: listens at port `2011`
+- Customer Service: listens at port `2001`
+
+You can verify that all services have been started by visit the Eureka server console at `http://localhost:2201/`.
+
+![](doc-images/pic6-1.png)
+
+#### Authentication and Obtain the generated OAuth2 token
+
+Before accessing the Customer service or the Account service, you need to authenticate
+against the Auth server. Access the authentication service endpoint `http://localhost:2501/oauth/token`
+using `POST` method.
+
+When issue the authentication service call, you need to provide the following information as
+they are configured in the Auth Server (in-memory configuration):
+
+- Authentication
+  - Authentication type: `Basic Auth`
+  - Username: `cubicbank` (this is the application name)
+  - Password: `passw0rd`
+- Request body (form-data):
+  - grant_type: `password`
+  - scope: `webclient`
+  - username: `john.smith`
+  - password: `password1`
+
+For example, if you invoke the authentication service in Postman, you need to provide the
+data as shown below.
+
+![img.png](doc-images/pic6-2.png)
+
+![img_1.png](doc-images/pic6-3.png)
+
+In the response of the authentication service invocation, you should be able to see generated
+tokens. Record the access token, which you will need in the next step to access the Customer
+service and the Account service.
+
+![img_2.png](doc-images/pic6-4.png)
+
+#### Validate access token
+
+The Auth Server exposes an API, `http://localhost:2501/user`, for resource servers (e.g., 
+the Customer service and the Account service) to validate tokens. You can invoke this API
+using `GET` method with the access token that you just obtained in the last step.
+
+Don't forget to clear the authentication type and the request body. Please note that you
+need to add the Authorization header with the value of "`Bearer XXXXXX`", where `XXXXXX`
+represents the access token that you obtained in the last step, and there is a space between
+the "`Bearer`" and the access token.
+
+![img_3.png](doc-images/pic6-5.png)
+
+#### Access Resource Servers
+
+Now you can access the Account Service. If you access the account service, e.g., using the 
+service endpoint at `http://localhost:2301/api/acct-service/v1/accounts/customer/1`, without
+the access token, you will get the `HTTP 401 Unauthorized` error, as shown below.
+
+![img_4.png](doc-images/pic6-6.png)
+
+If you access the same account service again with the access token, you should be able to 
+obtain the expected result, as shown below.
+
+![img_5.png](doc-images/pic6-7.png)
+
+If you access the Customer Service, e.g., using the service endpoint at `http://localhost:2301/api/cust-service/v1/customers/`,
+with the access token, you will see both customer profile and account list are included in
+the response. This means the access token was passed to both the Customer Service and the
+Account Service by the Service Gateway (Zuul server).
+
+![img_6.png](doc-images/pic6-8.png)
+
+You can also observe that the access token in the log of the Customer Service.
+
+![img_7.png](doc-images/pic6-9.png)
+
+### Sub-package 6-2: Implementation of OAuth2 with JWT Tokens
+
+To build and run all services inside this sub-package, execute the following command:
+
+```windows
+C:spring-cloud> cd "6. Securing Microservices"
+C:spring-cloud> build_and_run_oauth2.bat
+```
+
+It will start the following servers/services:
+
+- Config Server: listens at port `2101`
+- Eureka Server: listens at port `2201`
+- Zuul Server 2: listens at port `2301`
+- Auth Server 2: listens at port `2501`
+- Account Service: listens at port `2011`
+- Customer Service: listens at port `2001`
+
+You can verify that all services have been started by visit the Eureka server console at `http://localhost:2201/`.
+
+![](doc-images/pic6-10.png)
+
+#### Authentication and Obtain the generated JWT token
+
+Before accessing the Customer service or the Account service, you need to authenticate
+against the Auth server. Access the authentication service endpoint `http://localhost:2501/oauth/token`
+using `POST` method.
+
+When issue the authentication service call, you need to provide the following information as
+they are configured in the Auth Server (in-memory configuration):
+
+- Authentication
+  - Authentication type: `Basic Auth`
+  - Username: `cubicbank` (this is the application name)
+  - Password: `passw0rd`
+- Request body (form-data):
+  - grant_type: `password`
+  - scope: `webclient`
+  - username: `john.smith`
+  - password: `password1`
+
+For example, if you invoke the authentication service in Postman, you need to provide the
+data as shown below.
+
+![img.png](doc-images/pic6-11.png)
+
+![img_1.png](doc-images/pic6-12.png)
+
+In the response of the authentication service invocation, you should be able to see generated
+JWT tokens. Record the access token, which you will need in the next step to access the 
+Customer service and the Account service.
+
+![img.png](doc-images/pic6-13.png)
+
+Please note, the actual token itself isn’t directly returned as JSON. Instead, the JSON body 
+is encoded using a Base64 encoding. If you’re interested in seeing the contents of a JWT 
+token, you can use online tools to decode the token. 
+
+You can use Stormpath (http://jsonwebtoken.io), or http://jwt.io, to decode the JWT access 
+token.
+
+![img_1.png](doc-images/pic6-14.png)
+
+If you put the signing key in the "Verify Signature" section, it can verify the signature of
+the JWT token using the provided signing key. The signing key is specified in the 
+`src/main/resources/application.properties` under the Auth Server 2 project.
+
+Please also note the `organizationName` field that was added to the JWT token. We will show
+that it is extracted by the Customer Service.
+
+#### Validate access token
+
+The Auth Server exposes an API, `http://localhost:2501/user`, for resource servers (e.g.,
+the Customer service and the Account service) to validate tokens. You can invoke this API
+using `GET` method with the access token that you just obtained in the last step.
+
+Don't forget to clear the authentication type and the request body. Please note that you
+need to add the Authorization header with the value of "`Bearer XXXXXX`", where `XXXXXX`
+represents the access token that you obtained in the last step, and there is a space between
+the "`Bearer`" and the access token.
+
+![img_2.png](doc-images/pic6-15.png)
+
+#### Access Resource Servers
+
+Now you can access the Customer Service, e.g., using the service endpoint at `http://localhost:2301/api/cust-service/v1/customers/`,
+with the JWT access token, you will see both customer profile and account list are included 
+in the response. This means the access token was passed to both the Customer Service and the
+Account Service by the Service Gateway (Zuul server).
+
+![img_3.png](doc-images/pic6-16.png)
+
+You can also observe that the JWT access token in the log of the Customer Service.
+
+![img_4.png](doc-images/pic6-17.png)
+
+You can also observe that the extracted custom field in the JWT token in the log of the 
+Customer Service.
+
+![img_5.png](doc-images/pic6-18.png)
+
+## Event-driven architecture with Spring Cloud Stream
 
