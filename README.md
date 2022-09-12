@@ -593,13 +593,36 @@ You can also observe that the access token in the log of the Customer Service.
 
 ![img_7.png](doc-images/pic6-9.png)
 
+Currently, two user credentials are set up in-memory in the Auth Server:
+
+- user #1:
+  - username: `john.smith`
+  - password: `password1`
+  - role: `USER`
+- user #2:
+  - username: `mary.poppins`
+  - password: `password2`
+  - role: `ADMIN`
+
+It is also configured in the Account Service that all authenticated users can access query APIs,
+but only users with `ADMIN` role can perform the `DELETE` operation.
+
+If you use `john.smith`'s access token to call the PUT operation on the account service
+endpoint `http://localhost:2301/api/acct-service/v1/accounts/1`, you will get `403 Forbidden`
+error, with the error message of "Access is denied" in the response, as shown below.
+
+![img.png](doc-images/pic6-10.png)
+
+However, if you use `mary.poppins`'s access token to call the PUT operation on the same service
+endpoint, it will run successfully.
+
 ### Sub-package 6-2: Implementation of OAuth2 with JWT Tokens
 
 To build and run all services inside this sub-package, execute the following command:
 
 ```windows
 C:spring-cloud> cd "6. Securing Microservices"
-C:spring-cloud> build_and_run_oauth2.bat
+C:spring-cloud> build_and_run_oauth2_jwt.bat
 ```
 
 It will start the following servers/services:
@@ -613,7 +636,7 @@ It will start the following servers/services:
 
 You can verify that all services have been started by visit the Eureka server console at `http://localhost:2201/`.
 
-![](doc-images/pic6-10.png)
+![](doc-images/pic6-11.png)
 
 #### Authentication and Obtain the generated JWT token
 
@@ -637,15 +660,15 @@ they are configured in the Auth Server (in-memory configuration):
 For example, if you invoke the authentication service in Postman, you need to provide the
 data as shown below.
 
-![img.png](doc-images/pic6-11.png)
+![img.png](doc-images/pic6-12.png)
 
-![img_1.png](doc-images/pic6-12.png)
+![img_1.png](doc-images/pic6-13.png)
 
 In the response of the authentication service invocation, you should be able to see generated
 JWT tokens. Record the access token, which you will need in the next step to access the 
 Customer service and the Account service.
 
-![img.png](doc-images/pic6-13.png)
+![img.png](doc-images/pic6-14.png)
 
 Please note, the actual token itself isn’t directly returned as JSON. Instead, the JSON body 
 is encoded using a Base64 encoding. If you’re interested in seeing the contents of a JWT 
@@ -654,7 +677,7 @@ token, you can use online tools to decode the token.
 You can use Stormpath (http://jsonwebtoken.io), or http://jwt.io, to decode the JWT access 
 token.
 
-![img_1.png](doc-images/pic6-14.png)
+![img_1.png](doc-images/pic6-15.png)
 
 If you put the signing key in the "Verify Signature" section, it can verify the signature of
 the JWT token using the provided signing key. The signing key is specified in the 
@@ -674,7 +697,7 @@ need to add the Authorization header with the value of "`Bearer XXXXXX`", where 
 represents the access token that you obtained in the last step, and there is a space between
 the "`Bearer`" and the access token.
 
-![img_2.png](doc-images/pic6-15.png)
+![img_2.png](doc-images/pic6-16.png)
 
 #### Access Resource Servers
 
@@ -683,16 +706,16 @@ with the JWT access token, you will see both customer profile and account list a
 in the response. This means the access token was passed to both the Customer Service and the
 Account Service by the Service Gateway (Zuul server).
 
-![img_3.png](doc-images/pic6-16.png)
+![img_3.png](doc-images/pic6-17.png)
 
 You can also observe that the JWT access token in the log of the Customer Service.
 
-![img_4.png](doc-images/pic6-17.png)
+![img_4.png](doc-images/pic6-18.png)
 
 You can also observe that the extracted custom field in the JWT token in the log of the 
 Customer Service.
 
-![img_5.png](doc-images/pic6-18.png)
+![img_5.png](doc-images/pic6-19.png)
 
 ## Event-driven architecture with Spring Cloud Stream
 
