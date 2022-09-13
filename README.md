@@ -719,3 +719,152 @@ Customer Service.
 
 ## Event-driven architecture with Spring Cloud Stream
 
+### Overview
+
+![img.png](doc-images/pic7-0.png)
+
+This package is extended based on Package #6 and added messaging functionality (using Kafka) 
+and Cache feature (using Redis).
+
+In this package, it contains the following services/servers:
+
+- Config Server
+- Eureka Server
+- Zuul Server
+- Auth Server (OAuth2 only, no JWT)
+- Customer Service: this is partly done for the demonstration of basic access to Kafka
+(using default input and output) and Redis (but not record eviction) 
+- Customer Service 2: this is a fully completed version with using custom input and output
+of Kafka, and Redis eviction upon account update events from the Account Service
+- Account Service
+
+Please note that, in this package, we have disabled the `SpecialRoutesFilter` in the Zuul
+server, so we will not need to include the Special Route Service and the New Account Service
+starting this package.
+
+To build and run all services inside this sub-package, execute the following command:
+
+```windows
+C:spring-cloud> cd "7. Event-driven architecture with Spring Cloud Stream"
+C:spring-cloud> build_and_run.bat
+```
+
+It will start the following servers/services:
+
+- Zookeeper Server: listens at the default port `2181`
+- Kafka Server: listens at the default port `9092`
+- Redis Server: listens at the default port `6379`
+- Config Server: listens at port `2101`
+- Eureka Server: listens at port `2201`
+- Zuul Server: listens at port `2301`
+- Auth Server: listens at port `2501`
+- Account Service: listens at port `2011`
+- Customer Service: listens at port `2001`
+
+You can verify that the Zookeeper Server is up running without error by checking its running window.
+
+![img_1.png](doc-images/pic7-1.png)
+
+You can verify that the Kafka Server is up running without error by checking its running window.
+
+![img_2.png](doc-images/pic7-2.png)
+
+You can verify that the Redis Server is up running without error by checking its running window.
+
+![img_3.png](doc-images/pic7-3.png)
+
+You then can verify that all services have been started by visit the Eureka server console at `http://localhost:2201/`.
+
+![img_4.png](doc-images/pic7-4.png)
+
+#### Authentication and Obtain the generated OAuth2 token
+
+First, you need to authenticate against the Auth server. Access the authentication service endpoint 
+`http://localhost:2501/oauth/token` using `POST` method with the following information"
+
+- Authentication
+  - Authentication type: `Basic Auth`
+  - Username: `cubicbank` (this is the application name)
+  - Password: `passw0rd`
+- Request body (form-data):
+  - grant_type: `password`
+  - scope: `webclient`
+  - username: `john.smith`
+  - password: `password1`
+
+If you invoke the authentication service in Postman, you need to provide the data as shown below.
+
+![img.png](doc-images/pic6-2.png)
+
+![img_1.png](doc-images/pic6-3.png)
+
+In the response of the authentication service invocation, you should be able to see generated
+tokens. Record the access token, which you will need in the next step to access the Customer
+service and the Account service.
+
+![img_5.png](doc-images/pic7-5.png)
+
+#### Access the Customer Service
+
+Next you can retrieve all customer profiles using the following REST API that is exposed by 
+the Customer Service.
+
+```url
+  (GET) http://localhost:2301/api/cust-service/v1/customers
+```
+
+If it ran successfully, you should be able to obtain the response as shown below.
+
+![img_6.png](doc-images/pic7-6.png)
+
+You can observe in the log of the Customer Service that the account lists for each customer
+is not able to be retrieved from the Redis cache and hence is retrieved from the Account 
+Service.
+
+![img_7.png](doc-images/pic7-7.png)
+
+Now if you retrieve customer profiles again, you should be able to obtain the same result,
+but from the Redis cache. You can verify this by observing the log of the Customer Service,
+as shown below.
+
+![img_8.png](doc-images/pic7-8.png)
+
+#### Update the account information
+
+Now you can update the information of one account in the Account Service by accessing the 
+following service endpoint.
+
+```url
+  (PUT) http://localhost:2301/api/acct-service/v1/accounts/{accountId}
+```
+
+For example, let's update the account #1, which belongs to customer #1, with a new balance
+of 3000.21.
+
+![img_9.png](doc-images/pic7-9.png)
+
+In the log of the Account Service, you can observe that an event is published to Kafka queue
+regarding this accountId and customerId.
+
+![img_10.png](doc-images/pic7-10.png)
+
+In the log of the Customer Service, you can observe that an UPDATE event is received for above
+accountId and customerId, and the account list for customer #1 is evicted from Redis cache.
+
+![img_11.png](doc-images/pic7-11.png)
+
+When you retrieve the customer profile list again from the Customer Service, you should get
+the result with the updated account information (for customer #1).
+
+![img_12.png](doc-images/pic7-12.png)
+
+This is because the Customer Service retrieves the account list for customer #1 directly from 
+the Account Service, while retrieves the account lists for customer #2 and #3 from the Redis
+cache.
+
+![img_13.png](doc-images/pic7-13.png)
+
+
+
+
+
