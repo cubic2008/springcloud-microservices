@@ -12,8 +12,10 @@ if not defined KAFKA_HOME (
     echo "KAFKA_HOME" is defined.
 )
 echo KAFKA_HOME = %KAFKA_HOME%
+echo Starting Zookeeper Server . . .
 start %KAFKA_HOME%\bin\windows\zookeeper-server-start.bat %KAFKA_HOME%\config\zookeeper.properties
-timeout /T 6
+timeout /T 20
+echo Starting Kafka Server . . .
 start %KAFKA_HOME%\bin\windows\kafka-server-start.bat %KAFKA_HOME%\config\server.properties
 timeout /T 3
 

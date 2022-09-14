@@ -777,7 +777,7 @@ You then can verify that all services have been started by visit the Eureka serv
 
 ![img_4.png](doc-images/pic7-4.png)
 
-#### Authentication and Obtain the generated OAuth2 token
+### Authentication and Obtain the generated OAuth2 token
 
 First, you need to authenticate against the Auth server. Access the authentication service endpoint 
 `http://localhost:2501/oauth/token` using `POST` method with the following information"
@@ -804,7 +804,7 @@ service and the Account service.
 
 ![img_5.png](doc-images/pic7-5.png)
 
-#### Access the Customer Service
+### Access the Customer Service
 
 Next you can retrieve all customer profiles using the following REST API that is exposed by 
 the Customer Service.
@@ -829,7 +829,7 @@ as shown below.
 
 ![img_8.png](doc-images/pic7-8.png)
 
-#### Update the account information
+### Update the account information
 
 Now you can update the information of one account in the Account Service by accessing the 
 following service endpoint.
@@ -864,6 +864,170 @@ cache.
 
 ![img_13.png](doc-images/pic7-13.png)
 
+## 8. Distributed Logging and Tracing with Spring Cloud Sleuth and Zipkin
+
+### Overview
+
+This package is extended based on Package #7, and added distributed logging and tracing using 
+Spring Cloud Sleuth and Zipkin 
+
+In this package, it contains the following services/servers:
+
+- Config Server
+- Eureka Server
+- Zuul Server
+- Auth Server (OAuth2 only, no JWT)
+- Customer Service: this is partly done for the demonstration of basic access to Kafka
+  (using default input and output) and Redis (but not record eviction)
+- Customer Service 2: this is a fully completed version with using custom input and output
+  of Kafka, and Redis eviction upon account update events from the Account Service
+- Account Service
+
+Please note that, in this package, we have disabled the `SpecialRoutesFilter` in the Zuul
+server, so we will not need to include the Special Route Service and the New Account Service
+starting this package.
+
+To build and run all services inside this sub-package, execute the following command:
+
+```windows
+C:spring-cloud> cd "8. Distributed Logging and Tracing"
+C:spring-cloud> build_and_run.bat
+```
+
+It will start the following servers/services:
+
+- Zookeeper Server: listens at the default port `2181`
+- Kafka Server: listens at the default port `9092`
+- Redis Server: listens at the default port `6379`
+- Zipkin Server: listens at the default port `9411`
+- Config Server: listens at port `2101`
+- Eureka Server: listens at port `2201`
+- Zuul Server: listens at port `2301`
+- Auth Server: listens at port `2501`
+- Account Service: listens at port `2011`
+- Customer Service: listens at port `2001`
+
+You can verify that the Zookeeper Server is up running without error by checking its running window.
+
+![img_1.png](doc-images/pic7-1.png)
+
+You can verify that the Kafka Server is up running without error by checking its running window.
+
+![img_2.png](doc-images/pic7-2.png)
+
+You can verify that the Redis Server is up running without error by checking its running window.
+
+![img_3.png](doc-images/pic7-3.png)
+
+You can verify that the Zipkin Server is up running without error by checking its running window.
+
+![img.png](doc-images/pic8-1.png)
+
+You then can verify that all services have been started by visit the Eureka server console at `http://localhost:2201/`.
+
+![img_4.png](doc-images/pic7-4.png)
+
+### Authentication and Obtain the generated OAuth2 token
+
+First, you need to authenticate against the Auth server. Access the authentication service endpoint
+`http://localhost:2501/oauth/token` using `POST` method with the following information"
+
+- Authentication
+  - Authentication type: `Basic Auth`
+  - Username: `cubicbank` (this is the application name)
+  - Password: `passw0rd`
+- Request body (form-data):
+  - grant_type: `password`
+  - scope: `webclient`
+  - username: `john.smith`
+  - password: `password1`
+
+If you invoke the authentication service in Postman, you need to provide the data as shown below.
+
+![img.png](doc-images/pic6-2.png)
+
+![img_1.png](doc-images/pic6-3.png)
+
+In the response of the authentication service invocation, you should be able to see generated
+tokens. Record the access token, which you will need in the next step to access the Customer
+service and the Account service.
+
+![img_1.png](doc-images/pic8-2.png)
+
+#### Access the Customer Service
+
+Next you can retrieve all customer profiles through the Zuul Server using the following REST 
+API that is exposed by the Customer Service.
+
+```url
+  (GET) http://localhost:2301/api/cust-service/v1/customers
+```
+
+If it ran successfully, you should be able to obtain the response as shown below.
+
+![img_2.png](doc-images/pic8-3.png)
+
+If the look at the header of the response, you can find the trace id in the `tmx-correlation-id`
+field.
+
+![img_3.png](doc-images/pic8-4.png)
+
+You can the service name, trace id, span id and the status of sending log to the Zipkin server
+in the log of the Zuul Server.
+
+![img_4.png](doc-images/pic8-5.png)
+
+Similarly, you can observe the same information in the log of the Customer Service. Please note
+that account lists for all customers are able to retrieve from the Redis cache, so all span ids
+are the same.
+
+![img_5.png](doc-images/pic8-6.png)
+
+Now go to the Zipkin server by entering the URL of `http://localhost:9411` in your browser.
+You can see the above transactions in the Zipkin console.
+
+![img_6.png](doc-images/pic8-7.png)
+
+You can drill down by clicking the entry and should be able to see all transactions are 
+to retrieve account lists from the Redis cache. That's why all span ids are the same.
+
+![img_7.png](doc-images/pic8-8.png)
+
+### Update the account information
+
+Now you can update the information of one account in the Account Service by accessing the
+following service endpoint.
+
+```url
+  (PUT) http://localhost:2301/api/acct-service/v1/accounts/{accountId}
+```
+
+For example, let's update the account #1, which belongs to customer #1, with a new balance
+of 3000.32.
+
+![img_8.png](doc-images/pic8-9.png)
+
+Then an UPDATE event is published to Kafka queue regarding this accountId and customerId. 
+Consequently, the Customer Service receives the event for above accountId and customerId, 
+and the account list for the affected customer (#1) is evicted from Redis cache.
+
+You can see this transaction in the Zipkin console.
+
+![img_9.png](doc-images/pic8-10.png)
+
+If you drill down this transaction, you can see the following details.
+
+![img_10.png](doc-images/pic8-11.png)
+
+When you retrieve the customer profile list again from the Customer Service, the Customer Service 
+retrieves the account list for customer #1 directly from the Account Service, while retrieves 
+the account lists for customer #2 and #3 from the Redis cache.
+
+![img_11.png](doc-images/pic8-12.png)
+
+Click the latest transaction to see the details.
+
+![img_12.png](doc-images/pic8-13.png)
 
 
 
